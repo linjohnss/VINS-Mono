@@ -12,6 +12,7 @@
 #include "parameters.h"
 #include "utility/visualization.h"
 
+#include <vins_estimator/GetVinsPose.h>
 
 Estimator estimator;
 
@@ -338,10 +339,27 @@ void process()
     }
 }
 
+bool getTFsrv(vins_estimator::GetVinsPose::Request &req, vins_estimator::GetVinsPose::Response &res)
+{
+    ROS_INFO(req.start ? "true" : "false");
+    if(req.start) {
+        res.x = estimator.tic[0].x();
+        res.y = estimator.tic[0].y();
+        res.z = estimator.tic[0].z();
+        res.rx = Quaterniond(estimator.ric[0]).x();
+        res.ry = Quaterniond(estimator.ric[0]).y();
+        res.rz = Quaterniond(estimator.ric[0]).z();
+        res.w = Quaterniond(estimator.ric[0]).w();
+    }
+
+    return true;
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "vins_estimator");
     ros::NodeHandle n("~");
+    ros::NodeHandle ns;
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
     readParameters(n);
     estimator.setParameter();
@@ -356,8 +374,10 @@ int main(int argc, char **argv)
     ros::Subscriber sub_image = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/feature_tracker/restart", 2000, restart_callback);
     ros::Subscriber sub_relo_points = n.subscribe("/pose_graph/match_points", 2000, relocalization_callback);
+    ros::ServiceServer service = ns.advertiseService("get_vins_pose", getTFsrv);
 
     std::thread measurement_process{process};
+    ROS_INFO("Ready to vins.");
     ros::spin();
 
     return 0;

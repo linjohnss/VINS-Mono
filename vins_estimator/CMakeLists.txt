@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     nav_msgs
     tf
     cv_bridge
+    message_generation
     )
 
 find_package(OpenCV REQUIRED)
@@ -28,6 +29,17 @@ find_package(Eigen3)
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+)
+
+
+add_service_files(
+  FILES
+  GetVinsPose.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
 )
 
 catkin_package()
@@ -50,7 +62,11 @@ add_executable(vins_estimator
     src/initial/initial_ex_rotation.cpp
     )
 
+add_executable(client_test
+    src/client_test.cpp
+    )
+
 
 target_link_libraries(vins_estimator ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES}) 
-
+target_link_libraries(client_test ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES}) 
 
